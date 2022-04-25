@@ -1,0 +1,285 @@
+{% extends "./home.html" %} {% block javascript %}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script text="javascript">
+  // csrf token to make POST requests in AJAX calls
+  const token = "{{ csrf_token }}";
+
+  // HTML for speed buttons made using django template. speed_options are passed through
+  // home view in views.py
+  const speedBtns = `<p>Speed:</p>
+        {% for speed in speed_options %}
+        <button class="dial" id="{{speed}}">{{ speed }}</button>
+        {% endfor %}`;
+      
+  // Gets the speed options in dictionary format
+  const speedOptions = JSON.parse(
+    "{{speed_options | safe}}".replaceAll("'", '"')
+  );
+
+  // Default message to show at message bar
+  const defaulMsg = "Solve the sudoku board or press solve button so I can solve it";
+
+  let numberOfSteps = 0;
+  let timeDelay = Object.values(speedOptions)[0]; // time delay between each iteration in solve animation
+  let prev = Object.keys(speedOptions)[0]; // Taking default speed as first value in dictionary
+  let solving = false;
+  let msgChanging = false; // If msg is pending to change inn changeMsg() function
+  let solved = false; // If all cells are solved in board
+  let paused = false; // If game or solving is paused
+
+  // Just pauses the execution for given seconds of time
+  async function normalSleep(s) {
+    return new Promise((resolve) => setTimeout(resolve, s * 1000));
+  }
+
+  // Pauses execution until game/solving is resumed
+  async function sleep(s) {
+    return new Promise((resolve) => {
+      let temp = s;
+      f = setInterval(async () => {
+        if (paused == true) {
+        } else {
+          await normalSleep(s);
+          return resolve("");
+        }
+      });
+    }).then((resolve) => {
+      clearInterval(f); // Clearing interval or it will keep running in background
+      return resolve;
+    });
+  }
+
+  // Increments number of steps by one
+  function addSteps() {
+    numberOfSteps += 1;
+    document.getElementById("steps").innerHTML = numberOfSteps;
+  }
+
+  // The stopwatch, no change when game/solving is paused
+  const timer = setInterval(function () {
+    var timeElement = parseInt(document.getElementById("timer").innerHTML);
+    if (!paused) {
+      document.getElementById("timer").innerHTML = timeElement + 1;
+    }
+  }, 1000);
+
+  // Restricts user to edit anything in board. 
+  // The restriction is removed when 'on' value is passed as false
+  function noEdit(on) {
+    if (on == true){
+    for (i of document.getElementsByClassName("cell")) {
+      i.classList.add("no-edit");
+    }}else{
+      for (i of document.getElementsByClassName("cell")) {
+      i.classList.remove("no-edit");
+    }}
+  }
+
+  // Adds button bar when solving starts
+  // Useful buttons for increasing speed of animations
+  // Removes buttons if 'on' is passed as false
+  function toggleSpeedBtns(on) {
+    let s = document.getElementsByClassName("speed")[0];
+    if (on == true) {
+      s.innerHTML = speedBtns;
+      document.getElementById(Object.keys(speedOptions)[0]).click();
+    } else {
+      s.innerHTML = null;
+    }
+  }
+
+  // Chnages message of msg bar in html to make website more lively
+  // Has 2 optional parameters which changes the message again after waiting for given time
+  async function changeMsg(msg, timeout = null, afterMsg = null) {
+    document.getElementById("msg").innerHTML = msg;
+    if (timeout) {
+      msgChanging = true;
+      await normalSleep(timeout);
+      if (solved == true) {
+        return;
+      }
+      document.getElementById("msg").innerHTML = afterMsg;
+      msgChanging = false;
+    }
+  }
+
+  // Triggered when any of the speed button is clicked 
+  // Changes the timeDelay value according to its value in speedOptions dictionary
+  // Adds some HTML class which highlights the selected button
+  $(document).on("click", ".dial", function () {
+    document.getElementById(prev).classList.remove("current-speedbtn");
+
+    const val = $(this)[0].innerHTML;
+    prev = $(this)[0].id;
+    timeDelay = speedOptions[val];
+    $(this)[0].classList.add("current-speedbtn");
+
+    if (paused == true) {
+      changeMsg("Going " + val + " after resumption", 1, "Solving Paused");
+    } else {
+      changeMsg("Going " + val, 1, "Solving...");
+    }
+  });
+
+  // Triggered when pause/play button is clicked
+  // It changes button name to 'Play' and blurs board if user is solving board or
+  // changes to 'Pause' and removes blur if it was paused at first place
+  // It also restricts the user from editing board if paused
+  $(document).on("click", "#pause", async function () {
+    const val = $(this)[0].innerHTML;
+    let currentElement = $(this)[0];
+
+    if (val === "Pause") {
+      noEdit(true);
+      currentElement.classList.add("make-red");
+      currentElement.innerHTML = "Play";
+      paused = true;
+      if (solving == true) {
+        changeMsg("Solving Paused");
+      } else {
+        changeMsg("Game Paused");
+        document.getElementsByClassName("main-board")[0].classList.add("blur");
+      }
+    } else {
+      noEdit(false);
+      currentElement.classList.remove("make-red");
+      currentElement.innerHTML = "Pause";
+      document.getElementsByClassName("main-board")[0].classList.remove("blur");
+      paused = false;
+      if (solving == false) {
+        changeMsg(defaulMsg);
+      }
+    }
+  });
+  
+  // Just redirects the page to self which results in having a new board as it randomly selects
+  // another board from the database in views.py
+  $(document).on("click", "#new-board", function () {
+    location.href = "{% url 'home' %}";
+  });
+
+  // Triggered on clicking solve button
+  // Does a POST request through AJAX call to /get-steps which returns array with all steps and
+  // if board was successfully solved
+  $(document).on("click", "#solve", function () {
+    // Returns if game is paused or if it is already solving or if it is already solved
+    if (paused == true){return} 
+    if (solving == true) {
+      return changeMsg("Already Solving", 1.5, "");
+    }
+    if (solved == true) {
+      return changeMsg("Already Solved. Click New Board to get a new board");
+    }
+
+    // Resets timer
+    document.getElementById("timer").innerHTML = 0;
+    // Toggles button bar
+    toggleSpeedBtns(true);
+
+    $.ajax({
+      type: "POST",
+      url: "get_steps/",
+      data: {
+        csrfmiddlewaretoken: token,
+      },
+      success: async function (data) {
+        // disables editing board
+        noEdit(true);
+        // resets number of steps
+        numberOfSteps = 0;
+        solving = true; // starts solving thus set to true
+        // Goes through all the steps (2D array)
+        for (const item of data.steps) {
+          const currentElement = document.getElementById(item[0]);
+          currentElement.classList.add("current-cell");
+          currentElement.value = item[1];
+
+          // If it backtracks so it means the value is empty string
+          // also adds/removes respective class for cell; wrong, solved, current or empty cell
+          if (item[1] === " ") {
+            if ((msgChanging == false) & (paused == false)) {
+              changeMsg("Backtracking...");
+            }
+            currentElement.classList.add("empty-cell");
+            currentElement.classList.remove("solved-cell");
+
+          } else {
+
+            if ((msgChanging == false) & (paused == false)) {
+              changeMsg("Solving...");
+            }
+            currentElement.classList.remove("empty-cell", "wrong-cell");
+            currentElement.classList.add("solved-cell");
+          }
+          addSteps();
+          await sleep(timeDelay);
+          currentElement.classList.remove("current-cell");
+        }
+      
+        if (data.if_solved){
+            changeMsg("Hurray Solved!");
+            clearInterval(timer); // stop timer
+            solved = true;
+        }else{
+          noEdit(false);
+          changeMsg("Wouldn't solve! :<");
+        }
+        toggleSpeedBtns(false);
+        solving = false;
+        
+      },
+      error: function(){
+        alert("Something went wrong! :(")
+      }
+    });
+  });
+
+  // Triggered when user does any change in board
+  // It highlights the button accordingly and also changes msg bar according to that
+  // It makes a POST request through AJAX call to /check which returns two boolean value stating
+  // if user input is correct or if board is completely solved
+  $(document).on("change", ".cell", function () {
+    const pos = $(this)[0].id; 
+    const currentElementClasses = $(this)[0].classList;
+    const val = $(this).val(); // user input value
+    const xy = pos.split("x"); // x and y coordinate in 2D array of board
+
+    $.ajax({
+      type: "POST",
+      url: "check/",
+      data: {
+        val: val,
+        pos: pos,
+        csrfmiddlewaretoken: token,
+      },
+      success: function (data) {
+        if (data.is_correct) {
+          changeMsg("Correct!", 1, defaulMsg);
+          currentElementClasses.remove("empty-cell", "wrong-cell");
+          currentElementClasses.add("solved-cell");
+
+        } else if (val === "") {
+          changeMsg("Backtracking huh :)", 1, defaulMsg);
+          currentElementClasses.remove("wrong-cell", "solved-cell");
+          currentElementClasses.add("empty-cell");
+
+        } else {
+          changeMsg("Try again!", 1, defaulMsg);
+          currentElementClasses.remove("solved-cell", "empty-cell");
+          currentElementClasses.add("wrong-cell");
+        }
+        addSteps();
+        if (data.all_solved) {
+          changeMsg("Hurray! You solved it!");
+          clearInterval(timer); // stop timer
+          solved = true;
+        }
+      },
+      error: function(){
+        alert("Something went wrong! :(")
+      }
+    });
+  });
+</script>
+{% endblock %}

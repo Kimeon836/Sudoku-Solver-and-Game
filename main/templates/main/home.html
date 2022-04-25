@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sudoku Solver</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="shortcut icon"
+      type="image/png"
+      href="{% static 'favicon.png' %}"
+    />
+
+    <link
+      rel="stylesheet"
+      type="text/css"
+      media="screen"
+      href="{% static 'styles/main.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="item">
+        <header><h1 class="head">Sudoku Game and Solver</h1></header>
+      </div>
+      <div class="item">
+        <h2 id="msg">Solve the Sudoku or press Solve so I can solve it</h2>
+      </div>
+      <div class="item speed">
+      </div>
+      
+
+      <div class="item">
+        <table class="main-board">
+          {% for row in sudoku_board %}
+          <tr>
+            {% for col in row %}
+            <td
+              class="{{ forloop.parentloop.counter0 }}x{{ forloop.counter0 }}"
+            >
+              {% if col != 0 %}
+              <input
+                type="text"
+                class="cell solved-cell no-cursor"
+                id="{{ forloop.parentloop.counter0 }}x{{ forloop.counter0 }}"
+                maxlength="1"
+                value="{{ col }}"
+                readonly
+              />
+              {% else %}
+              <input
+                type="text"
+                class="cell empty-cell"
+                id="{{ forloop.parentloop.counter0 }}x{{ forloop.counter0 }}"
+                maxlength="1"
+                value=""
+              />
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      <div class="item timer-steps">
+        <div class="timer">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <h2 id="timer">0</h2>
+        </div>
+        <div class="steps">
+          <i class="fa-solid fa-shoe-prints"></i>
+          <h2 id="steps">0</h2>
+        </div>
+      </div>
+      <div class="item other">
+        <button id="new-board">New Board</button>
+        <button id="solve">Solve</button>
+        <button id="pause">Pause</button>
+      </div>
+    </div>
+  </body>
+  {% block javascript %} {% endblock %}
+</html>
