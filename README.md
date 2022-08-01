@@ -1,20 +1,22 @@
 # Sudoku Solver and Game
-Solves any sudoku puzzle using backtracking algorithm while visulazing the whole process. It's a web application made using Django.
+Solves any sudoku puzzle using backtracking algorithm while visualizing the whole process. It's a web application made using Django.
 
-It contains a **million** different puzzles to solve or be solved by computer.
+It contains a **million** different puzzles to be solved by you or the computer.
 
-Sudoku is 9x9 puzzle game where you solve the puzzle by writing a digit (1-9) in empty spaces making sure that same number ain't in same row, same column or same box.
+Sudoku is a 9x9 puzzle game where you solve a puzzle by inputting digits (1-9) in empty spaces until the entire grid is filled and that multiple of the same number are not in the same row, column, or box
+<br></br>
+## Setup
+<br>
 
-## Installition and Running
- First install all required  libraries using following command
+ First **install** all required modules using following command:
 
-`pip freeze > requirements.txt`
+`pip install -r requirements.txt `
 
-Make sure you have *sudoku.csv* file in _main/static_. If you face any issues in csv file then you can download it from here
+Make sure you have *sudoku.csv* file in _main/static_. If you face any issues with the csv file, then you can download it from here:
 
 <a href="https://www.kaggle.com/bryanpark/sudoku">*One Million Sudoku Puzzles*</a>
 
-Then run the project by following command:
+Then **run** the project by following command:
 
 `python manage.py runserver`
 
@@ -22,7 +24,7 @@ Then run the project by following command:
 
 `python3 manage.py runserver`
 
-If it shows migrations aren't applied then simply run following command:
+If the migrations aren't being applied, then simply run the following command:
 
 `python manage.py migrate`
 
@@ -31,8 +33,20 @@ If it shows migrations aren't applied then simply run following command:
 `python3 manage.py migrate`
 
 and then re-run previous command.
+<br></br>
+## Features
+<br>
 
+- One million different sudoku puzzles with various difficulties
+- Marks whether every move is correct or incorrect
+- Animates the backtracking process with variety of animation speeds to choose from
 
-
-
-
+# 
+<h3>Sudoku Solver Visualization</h3>
+<img src="./.github/general.gif" width="600" alt="Unable to load GIF">
+<br></br>
+<h3>Gameplay</h3>
+<img src="./.github/gameplay.gif" width="600" alt="Unable to load GIF">
+<br></br>
+<h3>More Showcase</h3>
+<img src="./.github/extra.gif" width="600" alt="Unable to load GIF">
