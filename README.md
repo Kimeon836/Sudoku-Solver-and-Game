@@ -40,8 +40,10 @@ and then re-run previous command.
 - One million different sudoku puzzles with various difficulties
 - Marks whether every move is correct or incorrect
 - Animates the backtracking process with variety of animation speeds to choose from
+<br></br>
+## Demonstration
+<br>
 
-# 
 <h3>Sudoku Solver Visualization</h3>
 <img src="./.github/general.gif" width="600" alt="Unable to load GIF">
 <br></br>
