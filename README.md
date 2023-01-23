@@ -4,7 +4,7 @@ Solves any sudoku puzzle using backtracking algorithm while visualizing the whol
 
 It contains a **million** different puzzles to be solved by you or the computer.
 
-Sudoku is a 9x9 puzzle game where you solve a puzzle by inputting digits (1-9) in empty spaces until the entire grid is filled and that multiple of the same number are not in the same row, column, or box. [Visit app](https://sudokusolverandgame.herokuapp.com)
+Sudoku is a 9x9 puzzle game where you solve a puzzle by inputting digits (1-9) in empty spaces until the entire grid is filled and that multiple of the same number are not in the same row, column, or box. [Visit app](https://sudokusolverandgame.onrender.com)
 <br></br>
 ## Setup
 <br>
